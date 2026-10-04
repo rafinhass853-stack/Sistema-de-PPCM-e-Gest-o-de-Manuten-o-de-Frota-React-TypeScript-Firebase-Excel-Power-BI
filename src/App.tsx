@@ -29,6 +29,10 @@ const categories=["Passeio","Utilitário leve","Picape","Van","Caminhão leve","
 const statuses=["Disponível","Em manutenção","Indisponível","Baixado"];
 const money=(v:number)=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const dateNow=()=>new Date().toISOString().slice(0,10);
+const dateTimeNow=()=>new Date().toISOString();
+const minutesBetween=(a?:string,b?:string)=>a&&b?Math.max(0,(new Date(b).getTime()-new Date(a).getTime())/60000):0;
+const durationMinutes=(o:Partial<OS>,end?:string)=>{const finish=end||o.closedAt||dateTimeNow();const total=Number(o.maintenanceMinutes||0)||minutesBetween(o.openedAt,finish);let waiting=Number(o.waitingMinutes||0);if(o.waitingStartedAt&&!o.closedAt)waiting+=minutesBetween(o.waitingStartedAt,finish);return {total,waiting,execution:Math.max(0,Number(o.executionMinutes||0)||total-waiting)};};
+const hoursText=(m:number)=>{const h=Math.floor(Math.max(0,m)/60);const min=Math.round(Math.max(0,m)%60);return `${h}h ${String(min).padStart(2,"0")}min`};
 const daysBetween=(a:string,b:string)=>Math.max(0,(new Date(b).getTime()-new Date(a).getTime())/86400000);
 function pct(a:number,b:number){return b?((a/b)*100).toFixed(1)+"%":"0.0%"}
 function Login(){const[email,setEmail]=useState("rafael@system.com");const[pwd,setPwd]=useState("");const[err,setErr]=useState("");const[busy,setBusy]=useState(false);
