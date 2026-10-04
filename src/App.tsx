@@ -1,6 +1,6 @@
 import {useEffect,useMemo,useState} from "react";
 import {onAuthStateChanged,signInWithEmailAndPassword,signOut} from "firebase/auth";
-import {addDoc,collection,deleteDoc,doc,getDocs,onSnapshot,serverTimestamp,setDoc,updateDoc} from "firebase/firestore";
+import {addDoc,collection,deleteDoc,doc,getDoc,getDocs,onSnapshot,serverTimestamp,setDoc,updateDoc,writeBatch} from "firebase/firestore";
 import ExcelJS from "exceljs";
 import type {User} from "firebase/auth";
 import {Activity,AlertTriangle,BarChart3,Car,CheckCircle2,ClipboardCheck,ClipboardList,Download,FileSpreadsheet,Gauge,HardHat,LogOut,Menu,Package,Plus,RefreshCw,Settings2,Truck,Wrench,X} from "lucide-react";
@@ -35,13 +35,56 @@ return <div className="login"><div className="login-brand"><div className="eixo-
 const DEMO_IDS={vehicle:"demo_vehicle_001",workshop:"demo_workshop_001",part:"demo_part_001",plan:"demo_plan_001",order:"demo_order_001",odometer:"demo_odometer_001"};
 async function seedDemoData(){
   const today=dateNow();
-  await setDoc(doc(db,"workshops",DEMO_IDS.workshop),{name:"OFICINA TESTE PPCM",type:"Interna",city:"São Carlos - SP",contact:"(16) 99999-0000",active:true,demo:true,updatedAt:serverTimestamp()},{merge:true});
-  await setDoc(doc(db,"vehicles",DEMO_IDS.vehicle),{prefix:"TESTE-001",plate:"ABC1D23",brand:"Mercedes-Benz",model:"Accelo Teste",year:2022,mileage:125000,type:"Caminhão",category:"Caminhão médio",status:"Disponível",fuel:"Diesel",base:"Base Teste",costCenter:"PPCM-TESTE",workshopId:DEMO_IDS.workshop,demo:true,updatedAt:serverTimestamp()},{merge:true});
-  await setDoc(doc(db,"parts",DEMO_IDS.part),{code:"PECA-TESTE-001",name:"Filtro de óleo — TESTE",stock:5,minStock:2,unitCost:180,location:"Almoxarifado Teste",active:true,demo:true,updatedAt:serverTimestamp()},{merge:true});
-  await setDoc(doc(db,"odometerReadings",DEMO_IDS.odometer),{vehicleId:DEMO_IDS.vehicle,date:today,value:125000,source:"Cenário de teste",demo:true,createdAt:serverTimestamp()});
-  await setDoc(doc(db,"maintenancePlans",DEMO_IDS.plan),{name:"Troca de óleo — TESTE",vehicleId:DEMO_IDS.vehicle,type:"Preventiva",intervalKm:10000,intervalDays:180,lastKm:115000,lastDate:today,nextKm:125000,nextDate:today,status:"Atrasada",critical:true,demo:true,updatedAt:serverTimestamp()},{merge:true});
-  await setDoc(doc(db,"workOrders",DEMO_IDS.order),{number:"OS-TESTE-001",vehicleId:DEMO_IDS.vehicle,type:"Preventiva",priority:"Alta",status:"Aberta",openedAt:today,scheduledAt:today,description:"OS de demonstração para validar o ciclo PPCM.",cause:"Manutenção preventiva programada.",solution:"Trocar filtro e registrar KM de encerramento.",laborCost:320,partsCost:180,totalCost:500,odometer:125000,workshopId:DEMO_IDS.workshop,technician:"Técnico Teste",laborHours:2,partsUsed:[{partId:DEMO_IDS.part,quantity:1,unitCost:180}],demo:true,updatedAt:serverTimestamp()},{merge:true});
-  await setDoc(doc(db,"auditLogs","demo_audit_001"),{action:"Criação cenário de teste",entity:"demo",entityId:DEMO_IDS.order,details:"Veículo, oficina, peça, preventiva e OS fictícios criados para validação do fluxo.",date:today,user:"demo",demo:true,createdAt:serverTimestamp()});
+  const batch=writeBatch(db);
+  batch.set(doc(db,"workshops",DEMO_IDS.workshop),{
+    name:"OFICINA TESTE PPCM",type:"Interna",city:"São Carlos - SP",
+    contact:"(16) 99999-0000",active:true,demo:true,updatedAt:serverTimestamp()
+  },{merge:true});
+  batch.set(doc(db,"vehicles",DEMO_IDS.vehicle),{
+    prefix:"TESTE-001",plate:"ABC1D23",brand:"Mercedes-Benz",model:"Accelo Teste",
+    year:2022,mileage:125000,type:"Caminhão",category:"Caminhão médio",
+    status:"Disponível",fuel:"Diesel",base:"Base Teste",costCenter:"PPCM-TESTE",
+    workshopId:DEMO_IDS.workshop,demo:true,updatedAt:serverTimestamp()
+  },{merge:true});
+  batch.set(doc(db,"parts",DEMO_IDS.part),{
+    code:"PECA-TESTE-001",name:"Filtro de óleo — TESTE",stock:5,minStock:2,
+    unitCost:180,location:"Almoxarifado Teste",active:true,demo:true,updatedAt:serverTimestamp()
+  },{merge:true});
+  batch.set(doc(db,"odometerReadings",DEMO_IDS.odometer),{
+    vehicleId:DEMO_IDS.vehicle,date:today,value:125000,source:"Cenário de teste",
+    demo:true,createdAt:serverTimestamp()
+  });
+  batch.set(doc(db,"maintenancePlans",DEMO_IDS.plan),{
+    name:"Troca de óleo — TESTE",vehicleId:DEMO_IDS.vehicle,type:"Preventiva",
+    intervalKm:10000,intervalDays:180,lastKm:115000,lastDate:today,nextKm:125000,
+    nextDate:today,status:"Atrasada",critical:true,demo:true,updatedAt:serverTimestamp()
+  },{merge:true});
+  batch.set(doc(db,"workOrders",DEMO_IDS.order),{
+    number:"OS-TESTE-001",vehicleId:DEMO_IDS.vehicle,type:"Preventiva",priority:"Alta",
+    status:"Aberta",openedAt:today,scheduledAt:today,
+    description:"OS de demonstração para validar o ciclo PPCM.",
+    cause:"Manutenção preventiva programada.",
+    solution:"Trocar filtro e registrar KM de encerramento.",
+    laborCost:320,partsCost:180,totalCost:500,odometer:125000,
+    workshopId:DEMO_IDS.workshop,technician:"Técnico Teste",laborHours:2,
+    partsUsed:[{partId:DEMO_IDS.part,quantity:1,unitCost:180}],
+    demo:true,updatedAt:serverTimestamp()
+  },{merge:true});
+  batch.set(doc(db,"auditLogs","demo_audit_001"),{
+    action:"Criação cenário de teste",entity:"demo",entityId:DEMO_IDS.order,
+    details:"Veículo, oficina, peça, preventiva e OS fictícios criados para validação do fluxo.",
+    date:today,user:"demo",demo:true,createdAt:serverTimestamp()
+  });
+  await batch.commit();
+  const checks=await Promise.all([
+    getDoc(doc(db,"vehicles",DEMO_IDS.vehicle)),
+    getDoc(doc(db,"workshops",DEMO_IDS.workshop)),
+    getDoc(doc(db,"parts",DEMO_IDS.part)),
+    getDoc(doc(db,"maintenancePlans",DEMO_IDS.plan)),
+    getDoc(doc(db,"workOrders",DEMO_IDS.order))
+  ]);
+  if(checks.some(x=>!x.exists()))throw new Error("O Firebase aceitou a gravação, mas a validação do cenário não encontrou todos os registros.");
+  return true;
 }
 async function clearDemoData(){
   const targets=[["workshops",DEMO_IDS.workshop],["vehicles",DEMO_IDS.vehicle],["parts",DEMO_IDS.part],["odometerReadings",DEMO_IDS.odometer],["maintenancePlans",DEMO_IDS.plan],["workOrders",DEMO_IDS.order],["auditLogs","demo_audit_001"]];
@@ -99,7 +142,7 @@ return <div className="shell"><aside className={mobile?"mobile-open":""}><div cl
 {page==="Relatórios"&&<Reports fleet={fleet} orders={orders} plans={plans} inspections={inspections} parts={parts} workshops={workshops} odometers={odometers} budgets={budgets} movements={movements} tires={tires} fuel={fuel} documents={documents} suppliers={suppliers} audits={audits}/>}</section></main></div>}
 
 function Card({icon:I,title,value,note,alert=false}:{icon:any;title:string;value:any;note:string;alert?:boolean}){return <div className={"card "+(alert?"alert-card":"")}><div className="icon"><I size={19}/></div><div><small>{title}</small><strong>{value}</strong><em>{note}</em></div></div>}
-function Dashboard({fleet,available,openOs,cost,overduePlans,lowStock,orders,plans,inspections}:{fleet:Vehicle[];available:number;openOs:number;cost:number;overduePlans:number;lowStock:number;orders:OS[];plans:Plan[];inspections:Inspection[]}){const critical=plans.filter((p:Plan)=>{const v=fleet.find(v=>v.id===p.vehicleId);return p.critical&&(p.status!=="Em dia"||(!!v&&Number(p.nextKm||0)>0&&Number(v.mileage||0)>=Number(p.nextKm||0))||(!!p.nextDate&&p.nextDate<dateNow()));}).length;const inMaintenance=fleet.filter((v:Vehicle)=>v.status==="Em manutenção").length;const unavailable=fleet.filter((v:Vehicle)=>v.status==="Indisponível").length;return <><div className="head"><div><h2>Centro de Controle</h2><p>Visão executiva baseada exclusivamente nos dados cadastrados no sistema.</p></div><div className="row-actions"><button className="secondary" onClick={async()=>{try{await seedDemoData();alert("Cenário fictício criado com sucesso. Atualize a tela se necessário e abra Frota/OS para validar TESTE-001 e OS-TESTE-001.")}catch(e:any){console.error("Erro ao criar cenário de teste:",e);alert("Não foi possível criar o cenário de teste.\n\n"+(e?.message||e))}}}>Criar cenário de teste</button><button className="secondary" onClick={async()=>{try{await clearDemoData();alert("Cenário fictício removido, incluindo movimentos derivados da OS.")}catch(e:any){console.error("Erro ao limpar cenário de teste:",e);alert("Não foi possível limpar o cenário.\n\n"+(e?.message||e))}}}>Limpar teste</button><div className="head-badge">EIXO SP • PPCM</div></div></div><div className="cards"><Card icon={Car} title="Frota total" value={fleet.length} note={available+" disponíveis"}/><Card icon={Gauge} title="Disponibilidade" value={pct(available,fleet.length)} note="veículos disponíveis"/><Card icon={Wrench} title="OS em aberto" value={openOs} note="backlog atual"/><Card icon={BarChart3} title="Custo acumulado" value={money(cost)} note="OS registradas"/></div><div className="cards cards-3"><Card icon={AlertTriangle} title="Preventivas atrasadas" value={overduePlans} note={critical+" críticas"}/><Card icon={Package} title="Itens abaixo do mínimo" value={lowStock} note="estoque de segurança"/><Card icon={ClipboardCheck} title="Inspeções" value={inspections.length} note="histórico registrado"/></div><div className="cards cards-3"><Card icon={Wrench} title="Em manutenção" value={inMaintenance} note="veículos parados em manutenção"/><Card icon={AlertTriangle} title="Indisponíveis" value={unavailable} note="fora de operação"/><Card icon={Car} title="Veículos cadastrados" value={fleet.length} note="base real da frota"/></div><div className="cols"><Panel title="Status da frota"><StatusBars fleet={fleet}/></Panel><Panel title="Prioridades de gestão">{overduePlans>0?<Row left="Preventivas vencidas" right={String(overduePlans)}/>:<Row left="Preventivas" right="Sem atrasos"/>}{lowStock>0?<Row left="Itens críticos de estoque" right={String(lowStock)}/>:<Row left="Estoque" right="Dentro do mínimo"/>}<Row left="Ordens em aberto" right={String(openOs)}/><Row left="Frota disponível" right={pct(available,fleet.length)}/></Panel></div><Panel title="Últimas ordens"><Table headers={["OS","Veículo","Tipo","Prioridade","Status","Custo"]}>{[...orders].sort((a,b)=>String(b.openedAt||"").localeCompare(String(a.openedAt||""))).slice(0,8).map((o:OS)=><tr key={o.id}><td>{o.number}</td><td>{fleet.find((v:Vehicle)=>v.id===o.vehicleId)?.prefix||"—"}</td><td>{o.type}</td><td><span className={"priority "+o.priority.toLowerCase()}>{o.priority}</span></td><td>{o.status}</td><td>{money(o.totalCost)}</td></tr>)}</Table>{!orders.length&&<Empty text="Nenhuma OS cadastrada ainda."/>}</Panel></>}
+function Dashboard({fleet,available,openOs,cost,overduePlans,lowStock,orders,plans,inspections}:{fleet:Vehicle[];available:number;openOs:number;cost:number;overduePlans:number;lowStock:number;orders:OS[];plans:Plan[];inspections:Inspection[]}){const critical=plans.filter((p:Plan)=>{const v=fleet.find(v=>v.id===p.vehicleId);return p.critical&&(p.status!=="Em dia"||(!!v&&Number(p.nextKm||0)>0&&Number(v.mileage||0)>=Number(p.nextKm||0))||(!!p.nextDate&&p.nextDate<dateNow()));}).length;const inMaintenance=fleet.filter((v:Vehicle)=>v.status==="Em manutenção").length;const unavailable=fleet.filter((v:Vehicle)=>v.status==="Indisponível").length;return <><div className="head"><div><h2>Centro de Controle</h2><p>Visão executiva baseada exclusivamente nos dados cadastrados no sistema.</p></div><div className="row-actions"><button className="secondary" onClick={async()=>{try{await seedDemoData();alert("TESTE OK: cenário criado e validado no Firebase. Abra Frota e Ordens de Serviço para ver TESTE-001 e OS-TESTE-001.")}catch(e:any){console.error("Erro ao criar cenário de teste:",e);alert("TESTE FALHOU: "+(e?.code?e.code+" — ":"")+(e?.message||e))}}}>Criar cenário de teste</button><button className="secondary" onClick={async()=>{try{await clearDemoData();alert("Cenário fictício removido, incluindo movimentos derivados da OS.")}catch(e:any){console.error("Erro ao limpar cenário de teste:",e);alert("Não foi possível limpar o cenário.\n\n"+(e?.message||e))}}}>Limpar teste</button><div className="head-badge">EIXO SP • PPCM</div></div></div><div className="cards"><Card icon={Car} title="Frota total" value={fleet.length} note={available+" disponíveis"}/><Card icon={Gauge} title="Disponibilidade" value={pct(available,fleet.length)} note="veículos disponíveis"/><Card icon={Wrench} title="OS em aberto" value={openOs} note="backlog atual"/><Card icon={BarChart3} title="Custo acumulado" value={money(cost)} note="OS registradas"/></div><div className="cards cards-3"><Card icon={AlertTriangle} title="Preventivas atrasadas" value={overduePlans} note={critical+" críticas"}/><Card icon={Package} title="Itens abaixo do mínimo" value={lowStock} note="estoque de segurança"/><Card icon={ClipboardCheck} title="Inspeções" value={inspections.length} note="histórico registrado"/></div><div className="cards cards-3"><Card icon={Wrench} title="Em manutenção" value={inMaintenance} note="veículos parados em manutenção"/><Card icon={AlertTriangle} title="Indisponíveis" value={unavailable} note="fora de operação"/><Card icon={Car} title="Veículos cadastrados" value={fleet.length} note="base real da frota"/></div><div className="cols"><Panel title="Status da frota"><StatusBars fleet={fleet}/></Panel><Panel title="Prioridades de gestão">{overduePlans>0?<Row left="Preventivas vencidas" right={String(overduePlans)}/>:<Row left="Preventivas" right="Sem atrasos"/>}{lowStock>0?<Row left="Itens críticos de estoque" right={String(lowStock)}/>:<Row left="Estoque" right="Dentro do mínimo"/>}<Row left="Ordens em aberto" right={String(openOs)}/><Row left="Frota disponível" right={pct(available,fleet.length)}/></Panel></div><Panel title="Últimas ordens"><Table headers={["OS","Veículo","Tipo","Prioridade","Status","Custo"]}>{[...orders].sort((a,b)=>String(b.openedAt||"").localeCompare(String(a.openedAt||""))).slice(0,8).map((o:OS)=><tr key={o.id}><td>{o.number}</td><td>{fleet.find((v:Vehicle)=>v.id===o.vehicleId)?.prefix||"—"}</td><td>{o.type}</td><td><span className={"priority "+o.priority.toLowerCase()}>{o.priority}</span></td><td>{o.status}</td><td>{money(o.totalCost)}</td></tr>)}</Table>{!orders.length&&<Empty text="Nenhuma OS cadastrada ainda."/>}</Panel></>}
 function StatusBars({fleet}:{fleet:Vehicle[]}){const data=statuses.map(s=>({s,n:fleet.filter(v=>v.status===s).length})).filter(x=>x.n);return <div className="bars">{data.map(x=><div className="bar-row" key={x.s}><span>{x.s}</span><div><i style={{width:pct(x.n,fleet.length)}}/></div><b>{x.n}</b></div>)}</div>}
 function Panel({title,children}:any){return <div className="panel"><h3>{title}</h3>{children}</div>}
 function Row({left,right}:{left:string;right:string}){return <div className="row"><span>{left}</span><b>{right}</b></div>}
