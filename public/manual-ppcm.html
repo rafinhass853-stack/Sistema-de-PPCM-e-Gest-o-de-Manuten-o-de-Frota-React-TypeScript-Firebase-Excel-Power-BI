@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>POP — PPCM Gestão de Frota</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;max-width:980px;margin:0 auto;padding:32px;color:#172033;line-height:1.55}
+h1{margin-bottom:4px}h2{margin-top:30px;border-bottom:1px solid #ddd;padding-bottom:6px}
+.meta{background:#f4f6f8;padding:16px;border-radius:8px;margin:18px 0}
+@media print{body{max-width:none;padding:12mm}.no-print{display:none}}
+</style>
+</head>
+<body>
+<div class="no-print"><button onclick="window.print()">Imprimir / Salvar em PDF</button></div>
+<h1>PPCM — Gestão de Frota</h1>
+<p><strong>POP — Procedimento Operacional Padrão</strong></p>
+<div class="meta"><strong>Versão 1.0</strong><br>Documento vivo. Sempre que o sistema receber uma alteração de funcionalidade, campo, fluxo, regra de negócio, relatório, integração ou módulo, este POP deve ser revisado no mesmo ciclo.</div>
+<h2>1. Objetivo</h2><p>Centralizar planejamento, programação e controle da manutenção da frota: Frota → Preventiva → OS → Peças/Mão de obra → Custos → Disponibilidade → Indicadores → Orçamento → Decisão.</p>
+<h2>2. Acesso</h2><p>O sistema usa autenticação por e-mail e senha do Firebase. O projeto atual é de acesso administrativo único.</p>
+<h2>3. Dashboard</h2><p>Acompanhar frota, disponibilidade, OS abertas, custo acumulado, preventivas vencidas, estoque baixo e prioridades.</p>
+<h2>4. Frota</h2><p>Manter prefixo, placa, marca, modelo, ano, KM, tipo, categoria, status, combustível, <strong>base operacional (cidade)</strong>, centro de custo, oficina responsável, garantia e aquisição. A base representa a cidade à qual a frota pertence, como São Carlos ou Itirapina.</p>
+<h2>5. Monitoramento</h2><p>Marcar veículos que serão monitorados e registrar fornecedor/rastreador. A futura API poderá alimentar localização, ignição, velocidade e KM.</p>
+<h2>6. Preventivas e Planejamento</h2><p>Registrar planos por KM/dias, última e próxima execução e criticidade. Usar Planejamento para backlog, OS críticas, programadas e fila de execução.</p>
+<h2>7. Ordens de Serviço</h2><p>Registrar Preventiva, Corretiva, Preditiva, Inspeção ou Campanha. Controlar prioridade, status, datas, oficina, descrição, causa, solução, técnico, horas, KM, peças, mão de obra e custo.</p>
+<h2>8. Encerramento de OS</h2><p>Ao encerrar, peças vinculadas podem gerar saída de estoque e movimento. O KM de encerramento atualiza a frota e registra odômetro. Preventivas encerradas atualizam o ciclo correspondente.</p>
+<h2>9. Inspeções</h2><p>Registrar tipo, veículo, data, KM, itens verificados/aprovados, resultado e observações.</p>
+<h2>10. Estoque</h2><p>Controlar código, descrição, estoque, mínimo, custo e localização. Entradas/saídas geram movimentos e o sistema bloqueia estoque negativo.</p>
+<h2>11. Pneus</h2><p>Controlar identificação, marca, modelo, medida, posição, veículo, status, KM, sulco e custo.</p>
+<h2>12. Combustível</h2><p>Registrar veículo, data, KM, litros, preço, total, posto e observações para análise de custos.</p>
+<h2>13. Documentos</h2><p>Registrar licenciamento, seguro, garantia, contratos e certificados com validade e alertas.</p>
+<h2>14. Oficinas e Fornecedores</h2><p>Manter cidade, endereço, CNPJ, telefone/contato, tipo e situação. Fornecedores também possuem SLA.</p>
+<h2>15. Cotações e Auditoria</h2><p>Cada cotação deve conter empresa/loja, CNPJ, endereço completo, telefone, serviço/peça, valor, data, validade, status, observações e vínculos aplicáveis. O registro também gera histórico de auditoria.</p>
+<h2>16. Indicadores</h2><p>Acompanhar disponibilidade, MTBF, MTTR, aderência preventiva, inspeções, custo total, custo/KM, backlog, OS críticas e esperas.</p>
+<h2>17. Relatórios e Orçamento</h2><p>Consolidar manutenção, combustível, pneus, estoque e orçamento. Comparar planejado, realizado e saldo. Exportar Excel para análises e Power BI.</p>
+<h2>18. Cenário de teste</h2><p>Existe cenário fictício com veículo, oficina, peça, preventiva e OS para validação. Após testar, limpar os registros de demonstração.</p>
+<h2>19. Rotina operacional recomendada</h2><ol><li>Atualizar frota e KM.</li><li>Verificar alertas e preventivas.</li><li>Programar OS.</li><li>Registrar execução, peças e mão de obra.</li><li>Encerrar OS com KM.</li><li>Conferir estoque.</li><li>Atualizar inspeções, combustível, pneus e documentos.</li><li>Conferir custos e indicadores.</li><li>Registrar cotações e evidências.</li><li>Exportar relatórios quando necessário.</li></ol>
+<h2>20. Regra de atualização do POP</h2><p>O manual é parte do projeto. Toda alteração relevante no sistema deve atualizar este documento no mesmo ciclo de desenvolvimento e implantação, mantendo o procedimento sincronizado com a versão publicada.</p>
+</body></html>
