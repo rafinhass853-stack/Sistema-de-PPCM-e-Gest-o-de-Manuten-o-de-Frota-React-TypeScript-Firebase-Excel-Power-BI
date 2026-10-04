@@ -147,7 +147,7 @@ return <div className="shell"><aside className={mobile?"mobile-open":""}><div cl
 {page==="Cotações"&&<QuotesModule quotes={quotes} suppliers={suppliers} workshops={workshops} fleet={fleet} orders={orders}/>}\n{page==="Manual / POP"&&<ManualPPCM/>}
 {page==="Alertas"&&<AlertsModule fleet={fleet} orders={orders} plans={plans} parts={parts} documents={documents} tires={tires}/>}
 {page==="Nova oficina"&&<WorkshopForm onBack={()=>goPage("Oficinas")}/>}
-{page==="Indicadores"&&<Indicators fleet={fleet} orders={orders} plans={plans} inspections={inspections} odometers={odometers}/>}
+{page==="Indicadores"&&<Indicators fleet={fleet} orders={orders} plans={plans} inspections={inspections} odometers={odometers} workshops={workshops}/>}
 {page==="Relatórios"&&<Reports fleet={fleet} orders={orders} plans={plans} inspections={inspections} parts={parts} workshops={workshops} odometers={odometers} budgets={budgets} movements={movements} tires={tires} fuel={fuel} documents={documents} suppliers={suppliers} audits={audits}/>}</section></main></div>}
 
 function ManualPPCM(){
