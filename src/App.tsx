@@ -48,7 +48,7 @@ const overduePlans=plans.filter(p=>p.status==="Atrasada").length;
 const lowStock=parts.filter(p=>Number(p.stock)<Number(p.minStock)).length;
 function goPage(n:string){setPage(n);setMobile(false)}
 return <div className="shell"><aside className={mobile?"mobile-open":""}><div className="brand"><div className="eixo-logo eixo-logo-light"><span>EIXO</span><b>[SP]</b></div><div><b>PPCM</b><small>Gestão de Frota</small></div></div><nav>{nav.map(([n,I])=><button className={page===n?"active":""} onClick={()=>goPage(n)} key={n}><I size={17}/><span>{n}</span></button>)}</nav><div className="aside-bottom"><small>{user.email}</small><button onClick={()=>signOut(auth)}><LogOut size={17}/>Sair</button></div></aside><main><header><button className="menu" onClick={()=>setMobile(!mobile)}>{mobile?<X/>:<Menu/>}</button><div><b>{page}</b><small>PPCM • Controle integrado de manutenção</small></div><button className="secondary" onClick={()=>exportExcel(fleet,orders,plans,inspections,parts,workshops,odometers,budgets)}><Download size={16}/> Excel</button></header><section className="content">
-{page==="Dashboard"&&<Dashboard fleet={fleet} available={available} openOs={openOs} cost={totalCost} overduePlans={overduePlans} lowStock={lowStock} orders={orders} plans={plans}/>}
+{page==="Dashboard"&&<Dashboard fleet={fleet} available={available} openOs={openOs} cost={totalCost} overduePlans={overduePlans} lowStock={lowStock} orders={orders} plans={plans} inspections={inspections}/>}
 {page==="Frota"&&<Fleet fleet={fleet} onAdd={()=>goPage("Novo veículo")}/>}
 {page==="Novo veículo"&&<VehicleForm workshops={workshops} onBack={()=>goPage("Frota")}/>}
 {page==="Preventivas"&&<Preventive fleet={fleet} plans={plans} onAdd={()=>goPage("Novo plano")}/>}
