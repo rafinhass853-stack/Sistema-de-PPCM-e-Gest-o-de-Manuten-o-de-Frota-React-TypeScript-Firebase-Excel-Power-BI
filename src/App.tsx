@@ -55,13 +55,19 @@ return <div className="shell"><aside className={mobile?"mobile-open":""}><div cl
 {page==="Novo veículo"&&<VehicleForm workshops={workshops} onBack={()=>goPage("Frota")}/>}
 {page==="Preventivas"&&<Preventive fleet={fleet} plans={plans} onAdd={()=>goPage("Novo plano")}/>}
 {page==="Novo plano"&&<PlanForm fleet={fleet} onBack={()=>goPage("Preventivas")}/>}
-{page==="Planejamento"&&<Planning fleet={fleet} orders={orders} plans={plans}/>}\n{page==="Ordens de Serviço"&&<Orders orders={orders} fleet={fleet} workshops={workshops} onAdd={()=>goPage("Nova OS")}/>}
+{page==="Planejamento"&&<Planning fleet={fleet} orders={orders} plans={plans}/>}
+{page==="Ordens de Serviço"&&<Orders orders={orders} fleet={fleet} workshops={workshops} onAdd={()=>goPage("Nova OS")}/>}
 {page==="Nova OS"&&<OsForm fleet={fleet} workshops={workshops} onBack={()=>goPage("Ordens de Serviço")}/>}
 {page==="Inspeções"&&<Inspections fleet={fleet} inspections={inspections} onAdd={()=>goPage("Nova inspeção")}/>}
 {page==="Nova inspeção"&&<InspectionForm fleet={fleet} onBack={()=>goPage("Inspeções")}/>}
 {page==="Estoque"&&<Stock parts={parts} movements={movements} onAdd={()=>goPage("Novo item")}/>}
 {page==="Novo item"&&<PartForm onBack={()=>goPage("Estoque")}/>}
-{page==="Oficinas"&&<Workshops workshops={workshops} onAdd={()=>goPage("Nova oficina")}/>}\n{page==="Pneus"&&<TiresModule tires={tires} fleet={fleet}/>}\n{page==="Combustível"&&<FuelModule fuel={fuel} fleet={fleet}/>}\n{page==="Documentos"&&<DocumentsModule documents={documents} fleet={fleet}/>}\n{page==="Fornecedores"&&<SuppliersModule suppliers={suppliers}/>}\n{page==="Alertas"&&<AlertsModule fleet={fleet} orders={orders} plans={plans} parts={parts} documents={documents} tires={tires}/>}
+{page==="Oficinas"&&<Workshops workshops={workshops} onAdd={()=>goPage("Nova oficina")}/>}
+{page==="Pneus"&&<TiresModule tires={tires} fleet={fleet}/>}
+{page==="Combustível"&&<FuelModule fuel={fuel} fleet={fleet}/>}
+{page==="Documentos"&&<DocumentsModule documents={documents} fleet={fleet}/>}
+{page==="Fornecedores"&&<SuppliersModule suppliers={suppliers}/>}
+{page==="Alertas"&&<AlertsModule fleet={fleet} orders={orders} plans={plans} parts={parts} documents={documents} tires={tires}/>}
 {page==="Nova oficina"&&<WorkshopForm onBack={()=>goPage("Oficinas")}/>}
 {page==="Indicadores"&&<Indicators fleet={fleet} orders={orders} plans={plans} inspections={inspections} odometers={odometers}/>}
 {page==="Relatórios"&&<Reports fleet={fleet} orders={orders} plans={plans} inspections={inspections} parts={parts} workshops={workshops} odometers={odometers} budgets={budgets}/>}</section></main></div>}
