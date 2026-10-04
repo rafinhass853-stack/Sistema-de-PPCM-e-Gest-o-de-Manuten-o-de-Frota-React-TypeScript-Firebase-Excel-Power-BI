@@ -24,16 +24,16 @@ h1{margin-bottom:4px}h2{margin-top:30px;border-bottom:1px solid #ddd;padding-bot
 <h2>6. Preventivas e Planejamento</h2><p>Registrar planos por KM/dias, última e próxima execução e criticidade. Usar Planejamento para backlog, OS críticas, programadas e fila de execução.</p>
 <h2>7. Ordens de Serviço</h2><p>Registrar Preventiva, Corretiva, Preditiva, Inspeção ou Campanha. Controlar prioridade, status, datas, oficina, descrição, causa, solução, técnico, horas, KM, peças, mão de obra e custo.</p>
 <h2>8. Encerramento de OS</h2><p>Ao encerrar, peças vinculadas podem gerar saída de estoque e movimento. O KM de encerramento atualiza a frota e registra odômetro. Preventivas encerradas atualizam o ciclo correspondente.</p>
-<h2>9. Inspeções</h2><p>Registrar tipo, veículo, data, KM, itens verificados/aprovados, resultado e observações.</p>
-<h2>10. Estoque</h2><p>Controlar código, descrição, estoque, mínimo, custo e localização. Entradas/saídas geram movimentos e o sistema bloqueia estoque negativo.</p>
-<h2>11. Pneus</h2><p>Controlar identificação, marca, modelo, medida, posição, veículo, status, KM, sulco e custo.</p>
-<h2>12. Combustível</h2><p>Registrar veículo, data, KM, litros, preço, total, posto e observações para análise de custos.</p>
-<h2>13. Documentos</h2><p>Registrar licenciamento, seguro, garantia, contratos e certificados com validade e alertas.</p>
-<h2>14. Oficinas e Fornecedores</h2><p>Manter cidade, endereço, CNPJ, telefone/contato, tipo e situação. Fornecedores também possuem SLA.</p>
-<h2>15. Cotações e Auditoria</h2><p>Cada cotação deve conter empresa/loja, CNPJ, endereço completo, telefone, serviço/peça, valor, data, validade, status, observações e vínculos aplicáveis. O registro também gera histórico de auditoria.</p>
-<h2>16. Indicadores</h2><p>Acompanhar disponibilidade, MTBF, MTTR, aderência preventiva, inspeções, custo total, custo/KM, backlog, OS críticas e esperas.</p>
-<h2>17. Relatórios e Orçamento</h2><p>Consolidar manutenção, combustível, pneus, estoque e orçamento. Comparar planejado, realizado e saldo. Exportar Excel para análises e Power BI.</p>
-<h2>18. Cenário de teste</h2><p>Existe cenário fictício com veículo, oficina, peça, preventiva e OS para validação. Após testar, limpar os registros de demonstração.</p>
-<h2>19. Rotina operacional recomendada</h2><ol><li>Atualizar frota e KM.</li><li>Verificar alertas e preventivas.</li><li>Programar OS.</li><li>Registrar execução, peças e mão de obra.</li><li>Encerrar OS com KM.</li><li>Conferir estoque.</li><li>Atualizar inspeções, combustível, pneus e documentos.</li><li>Conferir custos e indicadores.</li><li>Registrar cotações e evidências.</li><li>Exportar relatórios quando necessário.</li></ol>
-<h2>20. Regra de atualização do POP</h2><p>O manual é parte do projeto. Toda alteração relevante no sistema deve atualizar este documento no mesmo ciclo de desenvolvimento e implantação, mantendo o procedimento sincronizado com a versão publicada.</p>
+<h2>9. Tempo de manutenção e downtime</h2><p>O horário da abertura da OS, início da execução, espera por peça/oficina, retomada e encerramento é registrado para medir o tempo real da manutenção. O <strong>downtime total</strong> corresponde ao período entre a entrada da OS e o encerramento. O sistema separa <strong>tempo de espera</strong> de <strong>tempo efetivo de execução</strong>. OS abertas continuam com o relógio correndo até o encerramento.</p><h2>10. Inspeções</h2><p>Registrar tipo, veículo, data, KM, itens verificados/aprovados, resultado e observações.</p>
+<h2>11. Estoque</h2><p>Controlar código, descrição, estoque, mínimo, custo e localização. Entradas/saídas geram movimentos e o sistema bloqueia estoque negativo.</p>
+<h2>12. Pneus</h2><p>Controlar identificação, marca, modelo, medida, posição, veículo, status, KM, sulco e custo.</p>
+<h2>13. Combustível</h2><p>Registrar veículo, data, KM, litros, preço, total, posto e observações para análise de custos.</p>
+<h2>14. Documentos</h2><p>Registrar licenciamento, seguro, garantia, contratos e certificados com validade e alertas.</p>
+<h2>15. Oficinas e Fornecedores</h2><p>Manter cidade, endereço, CNPJ, telefone/contato, tipo e situação. Fornecedores também possuem SLA.</p>
+<h2>16. Cotações e Auditoria</h2><p>Cada cotação deve conter empresa/loja, CNPJ, endereço completo, telefone, serviço/peça, valor, data, validade, status, observações e vínculos aplicáveis. O registro também gera histórico de auditoria.</p>
+<h2>17. Indicadores</h2><p>Acompanhar disponibilidade, MTBF, MTTR, aderência preventiva, inspeções, custo total, custo/KM, backlog, OS críticas e esperas.</p>
+<h2>18. Relatórios e Orçamento</h2><p>Consolidar manutenção, combustível, pneus, estoque e orçamento. Comparar planejado, realizado e saldo. Exportar Excel para análises e Power BI.</p>
+<h2>19. Cenário de teste</h2><p>Existe cenário fictício com veículo, oficina, peça, preventiva e OS para validação. Após testar, limpar os registros de demonstração.</p>
+<h2>20. Rotina operacional recomendada</h2><ol><li>Atualizar frota e KM.</li><li>Verificar alertas e preventivas.</li><li>Programar OS.</li><li>Registrar início da execução, esperas por peça/oficina, retomada, peças e mão de obra.</li><li>Encerrar OS com KM.</li><li>Conferir estoque.</li><li>Atualizar inspeções, combustível, pneus e documentos.</li><li>Conferir custos e indicadores.</li><li>Registrar cotações e evidências.</li><li>Exportar relatórios quando necessário.</li></ol>
+<h2>21. Regra de atualização do POP</h2><p>O manual é parte do projeto. Toda alteração relevante no sistema deve atualizar este documento no mesmo ciclo de desenvolvimento e implantação, mantendo o procedimento sincronizado com a versão publicada.</p>
 </body></html>
