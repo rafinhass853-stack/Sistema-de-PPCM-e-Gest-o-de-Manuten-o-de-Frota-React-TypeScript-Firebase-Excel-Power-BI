@@ -5,6 +5,8 @@ import ExcelJS from "exceljs";
 import type {User} from "firebase/auth";
 import {Activity,AlertTriangle,BarChart3,Car,CheckCircle2,ClipboardCheck,ClipboardList,Download,FileSpreadsheet,Gauge,HardHat,LogOut,MapPin,Menu,Package,Plus,Radio,RefreshCw,Settings2,Truck,Wrench,X,Clock3 as ClockIcon} from "lucide-react";
 import {auth,db} from "./lib/firebase";
+import FinesModule from "./FinesModule";
+import FleetImport from "./FleetImport";
 
 type Vehicle={id:string;prefix:string;plate:string;brand:string;model:string;year:number;mileage:number;type:string;category:string;status:string;fuel?:string;base?:string;costCenter?:string;workshopId?:string;warrantyUntil?:string;acquisitionDate?:string};
 type OS={id:string;number:string;vehicleId:string;type:string;priority:string;status:string;openedAt:string;scheduledAt?:string;startedAt?:string;closedAt?:string;closingOdometer?:number;description:string;cause?:string;solution?:string;laborCost:number;partsCost:number;totalCost:number;odometer:number;workshopId?:string;waitingReason?:string;waitingStartedAt?:string;waitingMinutes?:number;executionMinutes?:number;maintenanceMinutes?:number;technician?:string;laborHours?:number;previousVehicleStatus?:string;partsUsed?:{partId:string;quantity:number;unitCost:number}[];partsDeductedAt?:string};
@@ -23,7 +25,7 @@ type Odometer={id:string;vehicleId:string;date:string;value:number;source?:strin
 type Budget={id:string;year:number;category:string;planned:number;actual:number};
 type VehicleTracking={id:string;vehicleId:string;monitored:boolean;provider?:string;trackerId?:string;status?:string;lastLatitude?:number;lastLongitude?:number;lastSpeed?:number;lastOdometer?:number;lastIgnition?:boolean;lastUpdate?:string};
 
-const nav=[["Dashboard",Gauge],["Frota",Car],["Monitoramento",Radio],["Preventivas",ClipboardList],["Planejamento",Activity],["Ordens de Serviço",Wrench],["Inspeções",ClipboardCheck],["Estoque",Package],["Pneus",Truck],["Combustível",Activity],["Documentos",FileSpreadsheet],["Oficinas",HardHat],["Fornecedores",HardHat],["Cotações",FileSpreadsheet],["Manual / POP",ClipboardList],["Indicadores",BarChart3],["Alertas",AlertTriangle],["Relatórios",FileSpreadsheet]] as const;
+const nav=[["Dashboard",Gauge],["Frota",Car],["Monitoramento",Radio],["Preventivas",ClipboardList],["Planejamento",Activity],["Ordens de Serviço",Wrench],["Inspeções",ClipboardCheck],["Estoque",Package],["Pneus",Truck],["Combustível",Activity],["Documentos",FileSpreadsheet],["Multas",AlertTriangle],["Importar Frota",FileSpreadsheet],["Oficinas",HardHat],["Fornecedores",HardHat],["Cotações",FileSpreadsheet],["Manual / POP",ClipboardList],["Indicadores",BarChart3],["Alertas",AlertTriangle],["Relatórios",FileSpreadsheet]] as const;
 const operationalBases=["São Carlos","Itirapina","Araraquara","Rio Claro","Limeira","Matão","Ribeirão Preto","Mogi Guaçu","Outra"];
 const categories=["Passeio","Utilitário leve","Picape","Van","Caminhão leve","Caminhão médio","Caminhão pesado","Guincho leve","Guincho pesado","Caminhão-pipa","Veículo de inspeção","Veículo operacional","Outro"];
 const statuses=["Disponível","Em manutenção","Indisponível","Baixado"];
@@ -110,10 +112,10 @@ async function clearDemoData(){
 
 function App(){
 const[user,setUser]=useState<User|null>(null);const[ready,setReady]=useState(false);const[page,setPage]=useState("Dashboard");const[mobile,setMobile]=useState(false);const[selectedVehicleId,setSelectedVehicleId]=useState<string|null>(null);
-const[vehicles,setVehicles]=useState<Vehicle[]>([]);const[orders,setOrders]=useState<OS[]>([]);const[plans,setPlans]=useState<Plan[]>([]);const[inspections,setInspections]=useState<Inspection[]>([]);const[parts,setParts]=useState<Part[]>([]);const[workshops,setWorkshops]=useState<Workshop[]>([]);const[odometers,setOdometers]=useState<Odometer[]>([]);const[budgets,setBudgets]=useState<Budget[]>([]);const[movements,setMovements]=useState<StockMovement[]>([]);const[tires,setTires]=useState<Tire[]>([]);const[fuel,setFuel]=useState<FuelEntry[]>([]);const[documents,setDocuments]=useState<FleetDocument[]>([]);const[suppliers,setSuppliers]=useState<Supplier[]>([]);const[audits,setAudits]=useState<Audit[]>([]);const[tracking,setTracking]=useState<VehicleTracking[]>([]);const[quotes,setQuotes]=useState<Quote[]>([]);
+const[vehicles,setVehicles]=useState<Vehicle[]>([]);const[orders,setOrders]=useState<OS[]>([]);const[plans,setPlans]=useState<Plan[]>([]);const[inspections,setInspections]=useState<Inspection[]>([]);const[parts,setParts]=useState<Part[]>([]);const[workshops,setWorkshops]=useState<Workshop[]>([]);const[odometers,setOdometers]=useState<Odometer[]>([]);const[budgets,setBudgets]=useState<Budget[]>([]);const[movements,setMovements]=useState<StockMovement[]>([]);const[tires,setTires]=useState<Tire[]>([]);const[fuel,setFuel]=useState<FuelEntry[]>([]);const[documents,setDocuments]=useState<FleetDocument[]>([]);const[suppliers,setSuppliers]=useState<Supplier[]>([]);const[audits,setAudits]=useState<Audit[]>([]);const[tracking,setTracking]=useState<VehicleTracking[]>([]);const[quotes,setQuotes]=useState<Quote[]>([]);const[fines,setFines]=useState<any[]>([]);
 useEffect(()=>onAuthStateChanged(auth,u=>{setUser(u);setReady(true)}),[]);
 useEffect(()=>{if(!user)return;const cols:[string,(x:any[])=>void][]=[
-["vehicles",setVehicles],["workOrders",setOrders],["maintenancePlans",setPlans],["inspections",setInspections],["parts",setParts],["workshops",setWorkshops],["odometerReadings",setOdometers],["budgets",setBudgets],["stockMovements",setMovements],["tires",setTires],["fuelEntries",setFuel],["fleetDocuments",setDocuments],["suppliers",setSuppliers],["auditLogs",setAudits],["vehicleTracking",setTracking],["quotes",setQuotes]];
+["vehicles",setVehicles],["workOrders",setOrders],["maintenancePlans",setPlans],["inspections",setInspections],["parts",setParts],["workshops",setWorkshops],["odometerReadings",setOdometers],["budgets",setBudgets],["stockMovements",setMovements],["tires",setTires],["fuelEntries",setFuel],["fleetDocuments",setDocuments],["suppliers",setSuppliers],["auditLogs",setAudits],["vehicleTracking",setTracking],["quotes",setQuotes],["fines",setFines]];
 const unsubs=cols.map(([name,setter])=>onSnapshot(collection(db,name),s=>setter(s.docs.map(d=>({id:d.id,...d.data()}))),error=>console.error(`Erro ao carregar ${name}:`,error)));
 return()=>unsubs.forEach(x=>x())},[user]);
 if(!ready)return <div className="loading">Carregando sistema...</div>;if(!user)return <Login/>;
@@ -142,7 +144,7 @@ return <div className="shell"><aside className={mobile?"mobile-open":""}><div cl
 {page==="Oficinas"&&<Workshops workshops={workshops} onAdd={()=>goPage("Nova oficina")}/>}
 {page==="Pneus"&&<TiresModule tires={tires} fleet={fleet}/>}
 {page==="Combustível"&&<FuelModule fuel={fuel} fleet={fleet}/>}
-{page==="Documentos"&&<DocumentsModule documents={documents} fleet={fleet}/>}
+{page==="Documentos"&&<DocumentsModule documents={documents} fleet={fleet}/>}\n{page==="Multas"&&<FinesModule fines={fines} vehicles={fleet}/>}\n{page==="Importar Frota"&&<FleetImport onDone={()=>goPage("Frota")}/>}
 {page==="Fornecedores"&&<SuppliersModule suppliers={suppliers}/>}
 {page==="Cotações"&&<QuotesModule quotes={quotes} suppliers={suppliers} workshops={workshops} fleet={fleet} orders={orders}/>}\n{page==="Manual / POP"&&<ManualPPCM/>}
 {page==="Alertas"&&<AlertsModule fleet={fleet} orders={orders} plans={plans} parts={parts} documents={documents} tires={tires}/>}
