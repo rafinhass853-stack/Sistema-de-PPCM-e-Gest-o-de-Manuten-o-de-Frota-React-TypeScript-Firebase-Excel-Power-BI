@@ -7,6 +7,7 @@ import {Activity,AlertTriangle,BarChart3,Car,CheckCircle2,ClipboardCheck,Clipboa
 import {auth,db} from "./lib/firebase";
 import FinesModule from "./FinesModule";
 import FleetImport from "./FleetImport";
+import {loadArtEspFleet} from "./artespFleetSeed";
 
 type Vehicle={id:string;prefix:string;plate:string;brand:string;model:string;year:number;mileage:number;type:string;category:string;status:string;fuel?:string;base?:string;costCenter?:string;workshopId?:string;warrantyUntil?:string;acquisitionDate?:string};
 type OS={id:string;number:string;vehicleId:string;type:string;priority:string;status:string;openedAt:string;scheduledAt?:string;startedAt?:string;closedAt?:string;closingOdometer?:number;description:string;cause?:string;solution?:string;laborCost:number;partsCost:number;totalCost:number;odometer:number;workshopId?:string;waitingReason?:string;waitingStartedAt?:string;waitingMinutes?:number;executionMinutes?:number;maintenanceMinutes?:number;technician?:string;laborHours?:number;previousVehicleStatus?:string;partsUsed?:{partId:string;quantity:number;unitCost:number}[];partsDeductedAt?:string};
@@ -95,6 +96,41 @@ async function seedDemoData(){
   if(checks.some(x=>!x.exists()))throw new Error("O Firebase aceitou a gravação, mas a validação do cenário não encontrou todos os registros.");
   return true;
 }
+async function ensureArtEspFleetSeed(){
+  const markerRef=doc(db,"fleetImports","ARTESP_2026_S1");
+  const markerSnap=await getDoc(markerRef);
+  const currentSnap=await getDocs(collection(db,"vehicles"));
+  if(markerSnap.exists() && currentSnap.size>=127)return;
+  const source=await loadArtEspFleet();
+  const existing=currentSnap.docs.map(d=>({id:d.id,data:d.data() as any}));
+  const byPlate=new Map(existing.filter(x=>x.data.plate).map(x=>[String(x.data.plate).toUpperCase(),x]));
+  const byRa=new Map(existing.filter(x=>x.data.ra).map(x=>[String(x.data.ra),x]));
+  let batch=writeBatch(db),ops=0,created=0,updated=0;
+  const commit=async()=>{if(ops){await batch.commit();batch=writeBatch(db);ops=0}};
+  for(const r of source){
+    const old=byRa.get(String(r.ra))||byPlate.get(String(r.plate).toUpperCase());
+    const id=old?.id||("artesp_"+String(r.ra).replace(/\\W/g,""));
+    batch.set(doc(db,"vehicles",id),{
+      ...r,
+      category:r.type,
+      status:old?.data?.status||"Disponível",
+      source:"ARTESP - OP e ADM",
+      sourceLot:"30",
+      sourceYear:2026,
+      sourceSemester:1,
+      importBatch:"ARTESP_2026_S1",
+      updatedAt:serverTimestamp()
+    },{merge:true});
+    ops++;old?updated++:created++;
+    if(ops>=400)await commit();
+  }
+  await commit();
+  await setDoc(markerRef,{
+    source:"Planilha L30 - Cadastro de Veículos - 2026 GERAL (1 SEMESTRE)",
+    totalRows:source.length,created,updated,importedAt:serverTimestamp(),
+    importedBy:auth.currentUser?.email||"",automatic:true
+  },{merge:true});
+}
 async function clearDemoData(){
   const targets=[["workshops",DEMO_IDS.workshop],["vehicles",DEMO_IDS.vehicle],["parts",DEMO_IDS.part],["odometerReadings",DEMO_IDS.odometer],["maintenancePlans",DEMO_IDS.plan],["workOrders",DEMO_IDS.order],["auditLogs","demo_audit_001"]];
   for(const [col,id] of targets)await deleteDoc(doc(db,col,id));
@@ -114,6 +150,7 @@ function App(){
 const[user,setUser]=useState<User|null>(null);const[ready,setReady]=useState(false);const[page,setPage]=useState("Dashboard");const[mobile,setMobile]=useState(false);const[selectedVehicleId,setSelectedVehicleId]=useState<string|null>(null);
 const[vehicles,setVehicles]=useState<Vehicle[]>([]);const[orders,setOrders]=useState<OS[]>([]);const[plans,setPlans]=useState<Plan[]>([]);const[inspections,setInspections]=useState<Inspection[]>([]);const[parts,setParts]=useState<Part[]>([]);const[workshops,setWorkshops]=useState<Workshop[]>([]);const[odometers,setOdometers]=useState<Odometer[]>([]);const[budgets,setBudgets]=useState<Budget[]>([]);const[movements,setMovements]=useState<StockMovement[]>([]);const[tires,setTires]=useState<Tire[]>([]);const[fuel,setFuel]=useState<FuelEntry[]>([]);const[documents,setDocuments]=useState<FleetDocument[]>([]);const[suppliers,setSuppliers]=useState<Supplier[]>([]);const[audits,setAudits]=useState<Audit[]>([]);const[tracking,setTracking]=useState<VehicleTracking[]>([]);const[quotes,setQuotes]=useState<Quote[]>([]);const[fines,setFines]=useState<any[]>([]);
 useEffect(()=>onAuthStateChanged(auth,u=>{setUser(u);setReady(true)}),[]);
+useEffect(()=>{if(!user)return;ensureArtEspFleetSeed().catch(error=>console.error("Carga automática ARTESP:",error))},[user]);
 useEffect(()=>{if(!user)return;const cols:[string,(x:any[])=>void][]=[
 ["vehicles",setVehicles],["workOrders",setOrders],["maintenancePlans",setPlans],["inspections",setInspections],["parts",setParts],["workshops",setWorkshops],["odometerReadings",setOdometers],["budgets",setBudgets],["stockMovements",setMovements],["tires",setTires],["fuelEntries",setFuel],["fleetDocuments",setDocuments],["suppliers",setSuppliers],["auditLogs",setAudits],["vehicleTracking",setTracking],["quotes",setQuotes],["fines",setFines]];
 const unsubs=cols.map(([name,setter])=>onSnapshot(collection(db,name),s=>setter(s.docs.map(d=>({id:d.id,...d.data()}))),error=>console.error(`Erro ao carregar ${name}:`,error)));
