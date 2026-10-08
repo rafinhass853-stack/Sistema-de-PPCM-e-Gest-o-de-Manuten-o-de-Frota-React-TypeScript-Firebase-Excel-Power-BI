@@ -7,6 +7,7 @@ type Props={onDone?:()=>void};
 type Row={ra:string;prefix:string;plate:string;brand:string;model:string;year:number;mileage:number;type:string;utilization:string;reserve:string;road:string;kmLocation:number;direction:string;buildingType:string;acquisitionDate:string;replacementYear:number;situation:string;observation:string};
 
 const clean=(v:any)=>v===null||v===undefined?"":String(v).trim();
+const key=(v:any)=>clean(v).toLowerCase().replace(/\\s+/g," ");
 const num=(v:any)=>{const n=Number(v);return Number.isFinite(n)?n:0};
 const excelDate=(v:any)=>{if(v instanceof Date)return v.toISOString().slice(0,10);if(typeof v==="number"){const d=new Date(Date.UTC(1899,11,30)+v*86400000);return d.toISOString().slice(0,10)};const s=clean(v);return s?s.slice(0,10):""};
 
@@ -19,7 +20,7 @@ export default function FleetImport({onDone}:Props){
    const ws=wb.worksheets.find(x=>x.name==="ARTESP - OP e ADM")||wb.worksheets[0];
    if(!ws)throw new Error("A aba ARTESP - OP e ADM não foi encontrada.");
    let headerRow=0;const headers=new Map<string,number>();
-   ws.eachRow((row,rowNumber)=>{const values=row.values as any[];const normalized=values.map(v=>clean(v).toLowerCase());if(normalized.includes("r.a.")&&normalized.includes("placa")){headerRow=rowNumber;normalized.forEach((v,i)=>{if(v)headers.set(v,i)})}});
+   ws.eachRow((row,rowNumber)=>{const values=row.values as any[];const normalized=values.map(v=>key(v));if(normalized.includes("r.a.")&&normalized.includes("placa")){headerRow=rowNumber;normalized.forEach((v,i)=>{if(v)headers.set(v,i)})}});
    if(!headerRow)throw new Error("Cabeçalho da frota não encontrado.");
    const get=(row:any[],name:string)=>row[headers.get(name)||0];
    const rows:Row[]=[];
@@ -40,7 +41,6 @@ export default function FleetImport({onDone}:Props){
     if(ops>=400)await commit();
    }
    await commit();
-   await writeBatch(db).commit().catch(()=>{});
    const marker=writeBatch(db);marker.set(doc(db,"fleetImports","ARTESP_2026_S1"),{source:"Planilha L30 - Cadastro de Veículos - 2026 GERAL (1 SEMESTRE)",totalRows:rows.length,created,updated,importedAt:serverTimestamp(),importedBy:auth.currentUser?.email||""},{merge:true});await marker.commit();
    setCount(rows.length);setMsg(`Importação concluída: ${rows.length} veículos processados (${created} novos, ${updated} atualizados).`);onDone?.();
   }catch(e:any){setMsg("Falha na importação: "+String(e?.message||e));}
