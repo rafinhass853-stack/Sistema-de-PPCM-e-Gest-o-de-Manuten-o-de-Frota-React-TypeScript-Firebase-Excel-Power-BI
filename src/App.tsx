@@ -107,7 +107,7 @@ async function ensureArtEspFleetSeed(){
   const byPlate=new Map(existing.filter(x=>x.data.plate).map(x=>[String(x.data.plate).trim().toUpperCase(),x]));
   const byRa=new Map(existing.filter(x=>x.data.ra!==undefined&&x.data.ra!==null&&String(x.data.ra).trim()).map(x=>[String(x.data.ra).trim(),x]));
   const markerSnap=await getDoc(markerRef);
-  const isPresent=(r:any)=>byRa.has(String(r.ra).trim())||byPlate.has(String(r.plate).trim().toUpperCase());
+  const isPresent=(r:any)=>existing.some(x=>String(x.data.ra??"").trim()===String(r.ra).trim()&&String(x.data.plate??"").trim().toUpperCase()===String(r.plate).trim().toUpperCase());
   if(markerSnap.exists()&&Number(markerSnap.data().totalRows)===source.length&&source.every(isPresent)){
     return {total:source.length,created:0,updated:0,alreadyComplete:true};
   }
@@ -138,7 +138,8 @@ async function ensureArtEspFleetSeed(){
   const verified=verifySnap.docs.map(d=>({id:d.id,data:d.data() as any}));
   const verifiedByRa=new Set(verified.filter(x=>x.data.ra!==undefined&&x.data.ra!==null).map(x=>String(x.data.ra).trim()));
   const verifiedByPlate=new Set(verified.filter(x=>x.data.plate).map(x=>String(x.data.plate).trim().toUpperCase()));
-  const missing=source.filter((r:any)=>!verifiedByRa.has(String(r.ra).trim())&&!verifiedByPlate.has(String(r.plate).trim().toUpperCase()));
+  const verifiedPairs=new Set(verified.map(x=>String(x.data.ra??"").trim()+"|"+String(x.data.plate??"").trim().toUpperCase()));
+  const missing=source.filter((r:any)=>!verifiedPairs.has(String(r.ra).trim()+"|"+String(r.plate).trim().toUpperCase()));
   if(missing.length)throw new Error(`Gravação parcial: ${missing.length} de ${source.length} veículos não foram encontrados na conferência pós-gravação. Faça nova tentativa; a rotina é segura para reexecutar.`);
   await setDoc(markerRef,{
     source:"Planilha L30 - Cadastro de Veículos - 2026 GERAL (1 SEMESTRE)",
