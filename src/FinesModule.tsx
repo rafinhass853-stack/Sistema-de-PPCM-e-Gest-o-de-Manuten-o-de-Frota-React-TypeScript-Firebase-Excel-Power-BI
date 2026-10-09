@@ -7,8 +7,8 @@ type Vehicle={id:string;prefix:string;plate:string;brand:string;model:string;bas
 type Fine={id:string;vehicleId?:string;noticeNumber:string;infractionDate:string;notificationDate?:string;receivedAt?:string;dueDate?:string;code?:string;description:string;location?:string;authority?:string;points:number;amount:number;discountAmount:number;finalAmount:number;status:string;driverName?:string;driverDocument?:string;identifiedAt?:string;paidAt?:string;paymentMethod?:string;defenseDeadline?:string;appealDeadline?:string;nextActionDue?:string;nextAction?:string;responsible?:string;unit?:string;nic?:boolean;notes?:string};
 const money=(v:number)=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`};
-const statuses=["Recebida","Em conferência","Aguardando identificação do condutor","Aguardando documentos da unidade","Pronta para defesa ou recurso","Defesa ou recurso protocolado","Aguardando julgamento","Aguardando pagamento","Pago","Cancelada"];
-const statusClass=(s:string)=>s==="Pago"||s==="Cancelada"?"ok":s==="Aguardando pagamento"||s==="Recebida"?"warn":"info";
+const statuses=["Recebida","Em conferência","Aguardando identificação do condutor","Aguardando documentos da unidade","Pronta para defesa ou recurso","Defesa ou recurso protocolado","Aguardando julgamento","Aguardando pagamento","Pago","Cancelada","Em análise","Identificado","Defesa","Recurso","Pagamento pendente"];
+const statusClass=(s:string)=>s==="Pago"||s==="Cancelada"?"ok":["Aguardando pagamento","Pagamento pendente","Recebida"].includes(s)?"warn":"info";
 const terminal=(s:string)=>["Pago","Cancelada"].includes(s);
 const csvCell=(v:unknown)=>`"${String(v??"").replace(/"/g,'""')}"`;
 
