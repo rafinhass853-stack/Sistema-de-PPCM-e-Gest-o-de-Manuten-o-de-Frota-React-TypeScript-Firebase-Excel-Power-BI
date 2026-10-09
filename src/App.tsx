@@ -98,20 +98,29 @@ async function seedDemoData(){
 }
 async function ensureArtEspFleetSeed(){
   const markerRef=doc(db,"fleetImports","ARTESP_2026_S1");
-  const markerSnap=await getDoc(markerRef);
-  const currentSnap=await getDocs(collection(db,"vehicles"));
-  if(markerSnap.exists() && currentSnap.size>=127)return;
   const source=await loadArtEspFleet();
+  if(!Array.isArray(source)||source.length<100)throw new Error(`Base ARTESP inválida: esperava ao menos 100 veículos, recebi ${Array.isArray(source)?source.length:0}.`);
+  const valid=source.filter((r:any)=>String(r.ra??"").trim()&&String(r.plate??"").trim());
+  if(valid.length!==source.length)throw new Error(`A base ARTESP contém ${source.length-valid.length} registro(s) sem R.A. ou placa. Nada será considerado concluído.`);
+  const currentSnap=await getDocs(collection(db,"vehicles"));
   const existing=currentSnap.docs.map(d=>({id:d.id,data:d.data() as any}));
-  const byPlate=new Map(existing.filter(x=>x.data.plate).map(x=>[String(x.data.plate).toUpperCase(),x]));
-  const byRa=new Map(existing.filter(x=>x.data.ra).map(x=>[String(x.data.ra),x]));
+  const byPlate=new Map(existing.filter(x=>x.data.plate).map(x=>[String(x.data.plate).trim().toUpperCase(),x]));
+  const byRa=new Map(existing.filter(x=>x.data.ra!==undefined&&x.data.ra!==null&&String(x.data.ra).trim()).map(x=>[String(x.data.ra).trim(),x]));
+  const markerSnap=await getDoc(markerRef);
+  const isPresent=(r:any)=>byRa.has(String(r.ra).trim())||byPlate.has(String(r.plate).trim().toUpperCase());
+  if(markerSnap.exists()&&Number(markerSnap.data().totalRows)===source.length&&source.every(isPresent)){
+    return {total:source.length,created:0,updated:0,alreadyComplete:true};
+  }
   let batch=writeBatch(db),ops=0,created=0,updated=0;
   const commit=async()=>{if(ops){await batch.commit();batch=writeBatch(db);ops=0}};
   for(const r of source){
-    const old=byRa.get(String(r.ra))||byPlate.get(String(r.plate).toUpperCase());
+    const old=byRa.get(String(r.ra).trim())||byPlate.get(String(r.plate).trim().toUpperCase());
     const id=old?.id||("artesp_"+String(r.ra).replace(/\\W/g,""));
     batch.set(doc(db,"vehicles",id),{
       ...r,
+      ra:String(r.ra).trim(),
+      prefix:String(r.prefix??"").trim(),
+      plate:String(r.plate).trim().toUpperCase(),
       category:r.type,
       status:old?.data?.status||"Disponível",
       source:"ARTESP - OP e ADM",
@@ -125,11 +134,18 @@ async function ensureArtEspFleetSeed(){
     if(ops>=400)await commit();
   }
   await commit();
+  const verifySnap=await getDocs(collection(db,"vehicles"));
+  const verified=verifySnap.docs.map(d=>({id:d.id,data:d.data() as any}));
+  const verifiedByRa=new Set(verified.filter(x=>x.data.ra!==undefined&&x.data.ra!==null).map(x=>String(x.data.ra).trim()));
+  const verifiedByPlate=new Set(verified.filter(x=>x.data.plate).map(x=>String(x.data.plate).trim().toUpperCase()));
+  const missing=source.filter((r:any)=>!verifiedByRa.has(String(r.ra).trim())&&!verifiedByPlate.has(String(r.plate).trim().toUpperCase()));
+  if(missing.length)throw new Error(`Gravação parcial: ${missing.length} de ${source.length} veículos não foram encontrados na conferência pós-gravação. Faça nova tentativa; a rotina é segura para reexecutar.`);
   await setDoc(markerRef,{
     source:"Planilha L30 - Cadastro de Veículos - 2026 GERAL (1 SEMESTRE)",
-    totalRows:source.length,created,updated,importedAt:serverTimestamp(),
-    importedBy:auth.currentUser?.email||"",automatic:true
+    totalRows:source.length,verifiedRows:source.length,created,updated,importedAt:serverTimestamp(),
+    importedBy:auth.currentUser?.email||"",automatic:true,verification:"passed"
   },{merge:true});
+  return {total:source.length,created,updated,alreadyComplete:false};
 }
 async function clearDemoData(){
   const targets=[["workshops",DEMO_IDS.workshop],["vehicles",DEMO_IDS.vehicle],["parts",DEMO_IDS.part],["odometerReadings",DEMO_IDS.odometer],["maintenancePlans",DEMO_IDS.plan],["workOrders",DEMO_IDS.order],["auditLogs","demo_audit_001"]];
@@ -149,8 +165,10 @@ async function clearDemoData(){
 function App(){
 const[user,setUser]=useState<User|null>(null);const[ready,setReady]=useState(false);const[page,setPage]=useState("Dashboard");const[mobile,setMobile]=useState(false);const[selectedVehicleId,setSelectedVehicleId]=useState<string|null>(null);
 const[vehicles,setVehicles]=useState<Vehicle[]>([]);const[orders,setOrders]=useState<OS[]>([]);const[plans,setPlans]=useState<Plan[]>([]);const[inspections,setInspections]=useState<Inspection[]>([]);const[parts,setParts]=useState<Part[]>([]);const[workshops,setWorkshops]=useState<Workshop[]>([]);const[odometers,setOdometers]=useState<Odometer[]>([]);const[budgets,setBudgets]=useState<Budget[]>([]);const[movements,setMovements]=useState<StockMovement[]>([]);const[tires,setTires]=useState<Tire[]>([]);const[fuel,setFuel]=useState<FuelEntry[]>([]);const[documents,setDocuments]=useState<FleetDocument[]>([]);const[suppliers,setSuppliers]=useState<Supplier[]>([]);const[audits,setAudits]=useState<Audit[]>([]);const[tracking,setTracking]=useState<VehicleTracking[]>([]);const[quotes,setQuotes]=useState<Quote[]>([]);const[fines,setFines]=useState<any[]>([]);
+const[fleetImportStatus,setFleetImportStatus]=useState("Aguardando verificação da carga ARTESP...");const[fleetImportBusy,setFleetImportBusy]=useState(false);
 useEffect(()=>onAuthStateChanged(auth,u=>{setUser(u);setReady(true)}),[]);
-useEffect(()=>{if(!user)return;ensureArtEspFleetSeed().catch(error=>console.error("Carga automática ARTESP:",error))},[user]);
+async function runFleetSeed(){setFleetImportBusy(true);setFleetImportStatus("Importando e conferindo os veículos ARTESP no Firestore...");try{const result=await ensureArtEspFleetSeed();setFleetImportStatus(result.alreadyComplete?`Carga ARTESP conferida: ${result.total} veículos já estavam registrados.`:`Carga ARTESP confirmada: ${result.total} veículos verificados; ${result.created} novos e ${result.updated} atualizados.`)}catch(error:any){console.error("Carga automática ARTESP:",error);setFleetImportStatus("FALHA na carga ARTESP: "+String(error?.message||error)+" A gravação não foi confirmada. Use Tentar novamente após corrigir as permissões/conexão.")}finally{setFleetImportBusy(false)}}
+useEffect(()=>{if(!user)return;void runFleetSeed()},[user]);
 useEffect(()=>{if(!user)return;const cols:[string,(x:any[])=>void][]=[
 ["vehicles",setVehicles],["workOrders",setOrders],["maintenancePlans",setPlans],["inspections",setInspections],["parts",setParts],["workshops",setWorkshops],["odometerReadings",setOdometers],["budgets",setBudgets],["stockMovements",setMovements],["tires",setTires],["fuelEntries",setFuel],["fleetDocuments",setDocuments],["suppliers",setSuppliers],["auditLogs",setAudits],["vehicleTracking",setTracking],["quotes",setQuotes],["fines",setFines]];
 const unsubs=cols.map(([name,setter])=>onSnapshot(collection(db,name),s=>setter(s.docs.map(d=>({id:d.id,...d.data()}))),error=>console.error(`Erro ao carregar ${name}:`,error)));
@@ -163,7 +181,7 @@ const totalCost=orders.reduce((a,o)=>a+Number(o.totalCost||0),0);
 const overduePlans=plans.filter(p=>{const v=fleet.find(v=>v.id===p.vehicleId);return p.status==="Atrasada"||(!!v&&Number(p.nextKm||0)>0&&Number(v.mileage||0)>=Number(p.nextKm||0))||(!!p.nextDate&&p.nextDate<dateNow());}).length;
 const lowStock=parts.filter(p=>Number(p.stock)<Number(p.minStock)).length;
 function goPage(n:string){setPage(n);setMobile(false)}
-return <div className="shell"><aside className={mobile?"mobile-open":""}><div className="brand"><div className="eixo-logo eixo-logo-light"><span>EIXO</span><b>[SP]</b></div><div><b>PPCM</b><small>Gestão de Frota</small></div></div><nav>{nav.map(([n,I])=><button className={page===n?"active":""} onClick={()=>goPage(n)} key={n}><I size={17}/><span>{n}</span></button>)}</nav><div className="aside-bottom"><small>{user.email}</small><button onClick={()=>signOut(auth)}><LogOut size={17}/>Sair</button></div></aside><main><header><button className="menu" onClick={()=>setMobile(!mobile)}>{mobile?<X/>:<Menu/>}</button><div><b>{page}</b><small>PPCM • Controle integrado de manutenção</small></div><button className="secondary" onClick={()=>exportExcel(fleet,orders,plans,inspections,parts,workshops,odometers,budgets,movements,tires,fuel,documents,suppliers,audits,quotes)}><Download size={16}/> Excel</button></header><section className="content">
+return <div className="shell"><aside className={mobile?"mobile-open":""}><div className="brand"><div className="eixo-logo eixo-logo-light"><span>EIXO</span><b>[SP]</b></div><div><b>PPCM</b><small>Gestão de Frota</small></div></div><nav>{nav.map(([n,I])=><button className={page===n?"active":""} onClick={()=>goPage(n)} key={n}><I size={17}/><span>{n}</span></button>)}</nav><div className="aside-bottom"><small>{user.email}</small><button onClick={()=>signOut(auth)}><LogOut size={17}/>Sair</button></div></aside><main><header><button className="menu" onClick={()=>setMobile(!mobile)}>{mobile?<X/>:<Menu/>}</button><div><b>{page}</b><small>PPCM • Controle integrado de manutenção</small></div><button className="secondary" onClick={()=>exportExcel(fleet,orders,plans,inspections,parts,workshops,odometers,budgets,movements,tires,fuel,documents,suppliers,audits,quotes)}><Download size={16}/> Excel</button></header><section className="content"><div className="notice" role="status" style={{marginBottom:16,borderLeft:"4px solid",borderColor:fleetImportStatus.startsWith("FALHA")?"#b91c1c":fleetImportStatus.startsWith("Carga ARTESP confirmada")||fleetImportStatus.startsWith("Carga ARTESP conferida")?"#15803d":"#64748b"}}><b>Cadastro ARTESP • Lote 30 / 2026 / 1º semestre</b><p>{fleetImportStatus}</p>{fleetImportStatus.startsWith("FALHA")&&<button className="secondary" disabled={fleetImportBusy} onClick={()=>void runFleetSeed()}>{fleetImportBusy?"Processando...":"Tentar novamente"}</button>}</div>
 {page==="Dashboard"&&<Dashboard fleet={fleet} available={available} openOs={openOs} cost={totalCost} overduePlans={overduePlans} lowStock={lowStock} orders={orders} plans={plans} inspections={inspections}/>}
 {page==="Frota"&&<Fleet fleet={fleet} onAdd={()=>goPage("Novo veículo")} onOpen={id=>{setSelectedVehicleId(id);goPage("Detalhe do veículo")}}/>}
 {page==="Monitoramento"&&<Monitoring fleet={fleet} tracking={tracking}/>}
