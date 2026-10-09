@@ -115,7 +115,7 @@ async function ensureArtEspFleetSeed(){
   const commit=async()=>{if(ops){await batch.commit();batch=writeBatch(db);ops=0}};
   for(const r of source){
     const old=byRa.get(String(r.ra).trim())||byPlate.get(String(r.plate).trim().toUpperCase());
-    const id=old?.id||("artesp_"+String(r.ra).replace(/\\W/g,""));
+    const id=old?.id||("artesp_"+String(r.ra).replace(/\W/g,""));
     batch.set(doc(db,"vehicles",id),{
       ...r,
       ra:String(r.ra).trim(),
