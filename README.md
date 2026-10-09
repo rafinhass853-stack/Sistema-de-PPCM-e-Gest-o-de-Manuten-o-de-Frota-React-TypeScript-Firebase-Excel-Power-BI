@@ -13,16 +13,31 @@ Transformar a manutenção em uma operação controlada por dados: **Frota → P
 - **Inspeções:** pré-viagem, operacional, segurança e pós-manutenção.
 - **Estoque:** peças e materiais com estoque mínimo e valor financeiro.
 - **Oficinas:** oficinas internas, externas, concessionárias e especializadas.
+- **Multas de veículos:** cadastro de autuações, prazos de defesa/recurso/pagamento e próxima ação, responsável, unidade, condutor, classificação NIC, status, auditoria e exportação CSV.
 - **Indicadores:** disponibilidade, MTBF, MTTR, aderência preventiva, conformidade de inspeções, custo total e custo/KM.
 - **Relatórios:** Excel estruturado e preparação para Power BI.
 - **Orçamento:** coleção `budgets` preparada para planejamento anual por categoria.
 
+## Gestão de multas
+O módulo **Multas** usa a coleção Firestore `fines` e mantém trilha de auditoria na coleção `auditLogs`. O fluxo permite:
+- Registrar auto, veículo, órgão autuador, enquadramento, datas, valor, condutor e unidade.
+- Controlar prazos de defesa, recurso, pagamento e próxima ação.
+- Definir responsável pela tratativa e registrar a classificação NIC quando aplicável.
+- Filtrar por status, prazo vencido, próximos três dias e NIC.
+- Acompanhar indicadores de multas em aberto, valores em aberto, multas com prazo vencido, pagas e NIC.
+- Exportar a listagem filtrada em CSV para análise em Excel/Power BI.
+- Registrar no histórico o cadastro, as mudanças de status e as exclusões.
+
+Os alertas são controles operacionais internos: sempre confira os prazos oficiais na notificação e siga os procedimentos aprovados pela área responsável. Restrinja o acesso aos dados pessoais dos condutores conforme as políticas da empresa.
+
 ## Modelo de dados
-`vehicles`, `maintenancePlans`, `workOrders`, `inspections`, `parts`, `workshops`, `odometerReadings`, `budgets`.
+`vehicles`, `maintenancePlans`, `workOrders`, `inspections`, `parts`, `workshops`, `odometerReadings`, `budgets`, `fines`, `auditLogs`.
 
 Relacionamento recomendado:
 
 `Veículo → Plano Preventivo → OS → Peças/Mão de obra → Custo → KPI`
+
+`Veículo → Multa → Prazo/Responsável → Tratativa → Resultado/Comprovantes → Auditoria`
 
 ## KPIs prioritários
 1. Disponibilidade da frota
@@ -37,9 +52,13 @@ Relacionamento recomendado:
 10. Conformidade das inspeções
 11. Itens críticos de estoque
 12. Realizado x orçamento
+13. Multas em aberto e valor associado
+14. Multas com prazo vencido / próximas do vencimento
+15. Multas NIC por quantidade, custo e unidade
+16. Tempo de tratativa e reincidência por enquadramento
 
 ## Power BI
-O Excel exportado possui abas separadas para Frota, OS, Preventivas, Inspeções, Estoque, Oficinas, Odômetros e Orçamento. A evolução recomendada é um modelo estrela com dimensões de Data, Veículo, Oficina, Tipo de manutenção, Centro de custo e uma camada fato para OS, custos, inspeções e odômetros.
+O Excel exportado possui abas separadas para Frota, OS, Preventivas, Inspeções, Estoque, Oficinas, Odômetros e Orçamento. A evolução recomendada é um modelo estrela com dimensões de Data, Veículo, Oficina, Tipo de manutenção, Centro de custo e uma camada fato para OS, custos, inspeções, odômetros e multas.
 
 ## Execução
 ```bash
